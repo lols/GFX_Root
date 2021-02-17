@@ -1286,10 +1286,16 @@ void GFX::getTextBounds(const char *str, int16_t x, int16_t y, int16_t *x1, int1
   if (maxx >= minx) {
     *x1 = minx;
     *w = maxx - minx + 1;
+
+    if (!gfxFont)
+      *w -= textsize_x;
   }
   if (maxy >= miny) {
     *y1 = miny;
     *h = maxy - miny + 1;
+
+    if (!gfxFont)
+      *h -= textsize_y;
   }
 }
 
@@ -1343,10 +1349,16 @@ void GFX::getTextBounds(const __FlashStringHelper * str, int16_t x, int16_t y, i
   if (maxx >= minx) {
     *x1 = minx;
     *w = maxx - minx + 1;
+
+    if (!gfxFont)
+      *w -= textsize_x;     
   }
   if (maxy >= miny) {
     *y1 = miny;
     *h = maxy - miny + 1;
+    
+    if (!gfxFont)
+      *h -= textsize_x;     
   }
 }
 

@@ -4,18 +4,8 @@
 #include "Arduino.h"
 #include "Print.h"
 #include "gfxfont.h"
-
-#define FASTLED_CRGB_SUPPORT 1
-
-#ifdef FASTLED_CRGB_SUPPORT
-	#include <FastLED.h>
-	#pragma message "GFX_ROOT > FastLED CRGB support enabled."
-	#define GFX_FUNCTION_COLOR_PARAM_TYPE CRGB
-#else
-	#pragma message "GFX_ROOT > FastLED CRGB support NOT enabled."
-	#define GFX_FUNCTION_COLOR_PARAM_TYPE uint16_t
-#endif
-
+#include <type_traits>
+#include <FastLED.h>
 
 class GFX : public Print
 {
@@ -29,15 +19,18 @@ class GFX : public Print
       Must be overridden in subclass.
       @param  x    X coordinate in pixels
       @param  y    Y coordinate in pixels
-      @param color  16-bit pixel color.
+      @param color  16-bit pixel color, or CRGB / 24bpp for FastLED
     */
     /**********************************************************************/
-#ifdef FASTLED_CRGB_SUPPORT	
-	// Always keep support for the BASIC AdaFruit_GFX color 565 uint16_t functions available.
-    virtual void drawPixel(int16_t x, int16_t y, uint16_t color) = 0;	
-    virtual void fillScreen(uint16_t color);	
-	virtual void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
-#endif	
+		// Always keep support for the BASIC AdaFruit_GFX color 565 uint16_t functions available.
+    virtual void drawPixel(int16_t x, int16_t y, uint16_t color) = 0;		
+    virtual void fillScreen(uint16_t color);
+	  virtual void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);	
+
+	  // + FastLED colour implementations as well.
+    virtual void drawPixel(int16_t x, int16_t y, CRGB color) = 0;	
+    virtual void fillScreen(CRGB color);	
+	  virtual void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, CRGB color);
 
     // CONTROL API
     // These MAY be overridden by the subclass to provide device-specific
@@ -45,27 +38,37 @@ class GFX : public Print
     void setRotation(uint8_t r);
     void invertDisplay(bool i);
 
-	// https://www.geeksforgeeks.org/virtual-function-cpp/
-	// http://www.cplusplus.com/forum/general/74973/
-    virtual void drawPixel(int16_t x, int16_t y, GFX_FUNCTION_COLOR_PARAM_TYPE color) = 0;		
-    virtual void fillScreen(GFX_FUNCTION_COLOR_PARAM_TYPE color);
-	virtual void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, CRGB color);	
-	
-    void drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, GFX_FUNCTION_COLOR_PARAM_TYPE color);
-    void drawRect(int16_t x, int16_t y, int16_t w, int16_t h, GFX_FUNCTION_COLOR_PARAM_TYPE color);
-    void drawCircle(int16_t x0, int16_t y0, int16_t r, GFX_FUNCTION_COLOR_PARAM_TYPE color);
-    void drawCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t cornername, GFX_FUNCTION_COLOR_PARAM_TYPE color);
-    void fillCircle(int16_t x0, int16_t y0, int16_t r, GFX_FUNCTION_COLOR_PARAM_TYPE color);
-    void fillCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t cornername, int16_t delta, GFX_FUNCTION_COLOR_PARAM_TYPE color);
-    void drawTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, GFX_FUNCTION_COLOR_PARAM_TYPE color);
-    void fillTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, GFX_FUNCTION_COLOR_PARAM_TYPE color);
-    void drawRoundRect(int16_t x0, int16_t y0, int16_t w, int16_t h, int16_t radius, GFX_FUNCTION_COLOR_PARAM_TYPE color);
-    void fillRoundRect(int16_t x0, int16_t y0, int16_t w, int16_t h, int16_t radius, GFX_FUNCTION_COLOR_PARAM_TYPE color);
-    void drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[], int16_t w,  int16_t h, GFX_FUNCTION_COLOR_PARAM_TYPE color);
-    void drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[], int16_t w, int16_t h, GFX_FUNCTION_COLOR_PARAM_TYPE color, GFX_FUNCTION_COLOR_PARAM_TYPE bg);
-    void drawBitmap(int16_t x, int16_t y, uint8_t *bitmap, int16_t w, int16_t h, GFX_FUNCTION_COLOR_PARAM_TYPE color);
-    void drawBitmap(int16_t x, int16_t y, uint8_t *bitmap, int16_t w, int16_t h, GFX_FUNCTION_COLOR_PARAM_TYPE color, GFX_FUNCTION_COLOR_PARAM_TYPE bg);
-    void drawXBitmap(int16_t x, int16_t y, const uint8_t bitmap[], int16_t w, int16_t h, GFX_FUNCTION_COLOR_PARAM_TYPE color);
+
+    template<typename T>  
+    void drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, T color);
+    template<typename T>
+    void drawRect(int16_t x, int16_t y, int16_t w, int16_t h, T color);
+    template<typename T>
+    void drawCircle(int16_t x0, int16_t y0, int16_t r, T color);
+    template<typename T>
+    void drawCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t cornername, T color);
+    template<typename T>
+    void fillCircle(int16_t x0, int16_t y0, int16_t r, T color);
+    template<typename T>
+    void fillCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t cornername, int16_t delta, T color);
+    template<typename T>
+    void drawTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, T color);
+    template<typename T>
+    void fillTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, T color);
+    template<typename T>
+    void drawRoundRect(int16_t x0, int16_t y0, int16_t w, int16_t h, int16_t radius, T color);
+    template<typename T>
+    void fillRoundRect(int16_t x0, int16_t y0, int16_t w, int16_t h, int16_t radius, T color);
+    template<typename T>
+    void drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[], int16_t w,  int16_t h, T color);
+    template<typename T>
+    void drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[], int16_t w, int16_t h, T color, T bg);
+    template<typename T>
+    void drawBitmap(int16_t x, int16_t y, uint8_t *bitmap, int16_t w, int16_t h, T color);
+    template<typename T>
+    void drawBitmap(int16_t x, int16_t y, uint8_t *bitmap, int16_t w, int16_t h, T color, T bg);
+    template<typename T>
+    void drawXBitmap(int16_t x, int16_t y, const uint8_t bitmap[], int16_t w, int16_t h, T color);
     void drawGrayscaleBitmap(int16_t x, int16_t y, const uint8_t bitmap[], int16_t w, int16_t h);
     void drawGrayscaleBitmap(int16_t x, int16_t y, uint8_t *bitmap, int16_t w, int16_t h);
     void drawGrayscaleBitmap(int16_t x, int16_t y, const uint8_t bitmap[], const uint8_t mask[], int16_t w, int16_t h);
@@ -74,8 +77,11 @@ class GFX : public Print
     void drawRGBBitmap(int16_t x, int16_t y, uint16_t *bitmap, int16_t w, int16_t h);
     void drawRGBBitmap(int16_t x, int16_t y, const uint16_t bitmap[], const uint8_t mask[], int16_t w, int16_t h);
     void drawRGBBitmap(int16_t x, int16_t y, uint16_t *bitmap, uint8_t *mask, int16_t w, int16_t h);
-    void drawChar(int16_t x, int16_t y, unsigned char c, GFX_FUNCTION_COLOR_PARAM_TYPE color, GFX_FUNCTION_COLOR_PARAM_TYPE bg, uint8_t size);
-    void drawChar(int16_t x, int16_t y, unsigned char c, GFX_FUNCTION_COLOR_PARAM_TYPE color, GFX_FUNCTION_COLOR_PARAM_TYPE bg, uint8_t size_x, uint8_t size_y);
+
+    // Limitation: Font colors, must be 16-bit 565 colour format
+    void drawChar(int16_t x, int16_t y, unsigned char c, uint16_t color, uint16_t bg, uint8_t size);
+    void drawChar(int16_t x, int16_t y, unsigned char c, uint16_t color, uint16_t bg, uint8_t size_x, uint8_t size_y);
+
     void getTextBounds(const char *string, int16_t x, int16_t y, int16_t *x1, int16_t *y1, uint16_t *w, uint16_t *h);
     void getTextBounds(const __FlashStringHelper *s, int16_t x, int16_t y, int16_t *x1, int16_t *y1, uint16_t *w, uint16_t *h);
     void getTextBounds(const String &str, int16_t x, int16_t y, int16_t *x1, int16_t *y1, uint16_t *w, uint16_t *h);
@@ -104,9 +110,18 @@ class GFX : public Print
                are set to same color rather than using a separate flag.
     */
     /**********************************************************************/
-    void setTextColor(GFX_FUNCTION_COLOR_PARAM_TYPE c) 
+    template<typename T>
+    void setTextColor(T c) 
     {
-      textcolor = textbgcolor = c;
+      if (std::is_same<T, CRGB>::value) {
+              // if CRGB provided, cast to 16bit color format.
+              textcolor = textbgcolor = CRGB_to_color565(c);
+      } 
+      else
+      {
+          textcolor = textbgcolor = c; // 16 bit, legacy adafruit
+      }
+
     }
 
     /**********************************************************************/
@@ -116,10 +131,18 @@ class GFX : public Print
       @param   bg  16-bit 5-6-5 Color to draw background/fill with
     */
     /**********************************************************************/
-    void setTextColor(GFX_FUNCTION_COLOR_PARAM_TYPE c, GFX_FUNCTION_COLOR_PARAM_TYPE bg) 
+    template<typename T>    
+    void setTextColor(T c, T bg) 
     {
-      textcolor = c;
-      textbgcolor = bg;
+      if (std::is_same<T, CRGB>::value) {
+              textcolor   = CRGB_to_color565(c);    // From parent class
+              textbgcolor = CRGB_to_color565(bg);
+      } 
+      else
+      {
+        textcolor = c;
+        textbgcolor = bg;
+      }
     }
 
     /**********************************************************************/
@@ -213,6 +236,17 @@ class GFX : public Print
       return cursor_y;
     };
 
+    /************************************************************************/
+    /*!
+      @brief      Takes a CRGB 24bit color
+      @returns    16-bit packed 565 color
+    */
+    /************************************************************************/
+    inline uint16_t CRGB_to_color565(CRGB c) {
+      return ((c.r & 0xF8) << 8) | ((c.g & 0xFC) << 3) | (c.b >> 3);
+    }
+
+
   protected:
     void charBounds(unsigned char c, int16_t *x, int16_t *y, int16_t *minx,
                     int16_t *miny, int16_t *maxx, int16_t *maxy);
@@ -222,8 +256,10 @@ class GFX : public Print
     int16_t _height;      ///< Display height as modified by current rotation
     int16_t cursor_x;     ///< x location to start print()ing text
     int16_t cursor_y;     ///< y location to start print()ing text
-    GFX_FUNCTION_COLOR_PARAM_TYPE textcolor;   ///< 16-bit background color for print()
-    GFX_FUNCTION_COLOR_PARAM_TYPE textbgcolor; ///< 16-bit text color for print()
+
+    uint16_t textcolor;   ///< 16-bit background color for print()
+    uint16_t textbgcolor; ///< 16-bit text color for print()
+
     uint8_t textsize_x;   ///< Desired magnification in X-axis of text to print()
     uint8_t textsize_y;   ///< Desired magnification in Y-axis of text to print()
     uint8_t rotation;     ///< Display rotation (0 thru 3)

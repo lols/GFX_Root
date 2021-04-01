@@ -3,7 +3,7 @@ The root/core graphics primitive functions extracted from the Adafruit GFX Libra
 # Change made by MrFaptastic
 ### Version 3.0.0
 * Fixed: https://github.com/adafruit/Adafruit-GFX-Library/issues/327#issuecomment-762309664
-* Implement FastLED CRGB color value (24bit) support for graphics functions when FASTLED_CRGB_SUPPORT is defined.
+* Implement FastLED CRGB color value (24bit) support for all graphics functions in addition to legacy 16-bit 565 colors.
 
 ### Version 2.0.0
 - reduced virtual methods to preserve code space

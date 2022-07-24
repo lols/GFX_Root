@@ -29,8 +29,10 @@ class GFX : public Print
 
 	  // + FastLED colour implementations as well.
     virtual void drawPixel(int16_t x, int16_t y, CRGB color) = 0;	
+    #ifdef FASTLED_CRGB_SUPPORT	
     virtual void fillScreen(CRGB color);	
 	  virtual void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, CRGB color);
+    #endif
 
     // CONTROL API
     // These MAY be overridden by the subclass to provide device-specific

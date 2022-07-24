@@ -268,4 +268,6 @@ class GFX : public Print
     GFXfont *gfxFont;     ///< Pointer to special font
 };
 
+#include <GFX_impl.h>
+
 #endif // _GFX_H

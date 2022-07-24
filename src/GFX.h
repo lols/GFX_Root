@@ -119,6 +119,10 @@ class GFX : public Print
               // if CRGB provided, cast to 16bit color format.
               textcolor = textbgcolor = CRGB_to_color565(c);
       } 
+      else if(std::is_same<T, CRGB::HTMLColorCode>::value)
+      {
+        textcolor = textbgcolor = CRGB_to_color565(CRGB(c));
+      }
       else
       {
           textcolor = textbgcolor = c; // 16 bit, legacy adafruit
@@ -140,6 +144,11 @@ class GFX : public Print
               textcolor   = CRGB_to_color565(c);    // From parent class
               textbgcolor = CRGB_to_color565(bg);
       } 
+      else if(std::is_same<T, CRGB::HTMLColorCode>::value)
+      {
+              textcolor   = CRGB_to_color565(CRGB(c));    // From parent class
+              textbgcolor = CRGB_to_color565(CRGB(bg));
+      }
       else
       {
         textcolor = c;
